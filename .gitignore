@@ -1,0 +1,88 @@
+﻿# =========================
+# Python / Bytecode
+# =========================
+__pycache__/
+*.py[cod]
+*$py.class
+
+# =========================
+# Virtual envs / uv
+# =========================
+.venv/
+venv/
+ENV/
+.uv/
+
+# =========================
+# Build / packaging
+# =========================
+build/
+dist/
+*.egg-info/
+.eggs/
+pip-wheel-metadata/
+
+# =========================
+# Caches
+# =========================
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.cache/
+
+# =========================
+# Jupyter / notebooks
+# =========================
+.ipynb_checkpoints/
+**/.ipynb_checkpoints/
+
+# =========================
+# OS / Editor
+# =========================
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# VS Code
+.vscode/
+
+# JetBrains
+.idea/
+
+# =========================
+# Logs
+# =========================
+*.log
+logs/
+*.out
+
+# =========================
+# MLflow
+# =========================
+mlruns/
+mlartifacts/
+
+# =========================
+# Model checkpoints (HF / Torch)
+# =========================
+**/checkpoint-*/
+**/*.pt
+**/*.pth
+**/*.bin
+**/*.safetensors
+
+# =========================
+# Env files / secrets
+# =========================
+.env
+.env.*
+!.env.example
+
+# =========================
+# Docker
+# =========================
+**/.dockerignore
+
+

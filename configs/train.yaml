@@ -1,0 +1,16 @@
+﻿model:
+  pretrained_name: distilbert-base-uncased
+data:
+  max_seq_length: 384
+  doc_stride: 128
+train:
+  seed: 42
+  learning_rate: 3e-5
+  batch_size: 16
+  epochs: 2
+  weight_decay: 0.01
+eval:
+  do_eval_each_epoch: true
+paths:
+  artifacts_dir: artifacts
+  reader_dir: artifacts/reader_model

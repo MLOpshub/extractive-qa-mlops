@@ -1,0 +1,10 @@
+﻿embedding:
+  model_name: sentence-transformers/all-MiniLM-L6-v2
+  normalize: true
+faiss:
+  index_type: flat
+retrieval:
+  top_k: 5
+paths:
+  artifacts_dir: artifacts
+  faiss_dir: artifacts/faiss
