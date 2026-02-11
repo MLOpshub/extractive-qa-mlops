@@ -142,7 +142,7 @@ def main() -> None:
         per_device_eval_batch_size=cfg.per_device_eval_batch_size,
         num_train_epochs=cfg.num_train_epochs,
         logging_strategy="steps",
-        logging_steps=50,
+        logging_steps=2000,
         report_to=[],
         fp16=True,
         seed=cfg.seed,
