@@ -186,7 +186,7 @@ def log_data_profile(
     return stats
 
 
-# standard SQuAD normalize 
+# standard SQuAD normalize
 def normalize_answer(s: str) -> str:
     def lower(text: str) -> str:
         return text.lower()
@@ -206,8 +206,9 @@ def normalize_answer(s: str) -> str:
 def write_error_report(
     run_dir: Path,
     trainer: Trainer,
+    eval_features,              # Dataset (NOT list)
     eval_examples_list,
-    eval_features_list,
+    eval_features_list,         # list only for offset_mapping lookup
     seed: int = 42,
     n_total: int = 30,
     n_each: int = 10,
@@ -224,18 +225,25 @@ def write_error_report(
     """
     rnd = random.Random(seed)
 
-    # predict logits on eval_features
-    pred_out = trainer.predict(eval_features_list)  # works with list or dataset
+    # only sample n_total examples to keep it fast
+    n_total = min(n_total, len(eval_examples_list))
+    sampled_idxs = rnd.sample(range(len(eval_examples_list)), n_total)
+    sampled_exids = {eval_examples_list[i]["id"] for i in sampled_idxs}
+
+    # predict logits on eval_features (Dataset)
+    pred_out = trainer.predict(eval_features)
     start_logits, end_logits = pred_out.predictions
 
     # index features by example_id
     feats_by_exid = {}
     for fi, feat in enumerate(eval_features_list):
         exid = feat["example_id"]
-        feats_by_exid.setdefault(exid, []).append(fi)
+        if exid in sampled_exids:
+            feats_by_exid.setdefault(exid, []).append(fi)
 
     rows = []
-    for ex in eval_examples_list:
+    for i in sampled_idxs:
+        ex = eval_examples_list[i]
         exid = ex["id"]
         context = ex["context"]
         question = ex["question"]
@@ -248,8 +256,8 @@ def write_error_report(
             offsets = eval_features_list[fi]["offset_mapping"]
 
             # top indices
-            s_top = sorted(range(len(s)), key=lambda i: s[i], reverse=True)[:n_best_size]
-            e_top = sorted(range(len(e)), key=lambda i: e[i], reverse=True)[:n_best_size]
+            s_top = sorted(range(len(s)), key=lambda j: s[j], reverse=True)[:n_best_size]
+            e_top = sorted(range(len(e)), key=lambda j: e[j], reverse=True)[:n_best_size]
 
             for si in s_top:
                 for ei in e_top:
@@ -318,7 +326,7 @@ def write_error_report(
 
     report = {
         "summary": {
-            "n_eval_examples": len(rows),
+            "n_eval_examples_sampled": len(rows),
             "n_correct_em": sum(1 for r in rows if r["correct_em"]),
             "n_incorrect": sum(1 for r in rows if not r["correct_em"]),
         },
@@ -417,15 +425,6 @@ def write_model_card_and_metadata(
             "weight_decay": cfg.weight_decay,
         },
         "error_analysis": {"path": "reports/error_cases.json"},
-        "limitations": [
-            "Long context: may miss answers far from the selected window.",
-            "Entity/number confusion when multiple similar mentions exist.",
-            "Sensitive to paraphrases / wording differences.",
-        ],
-        "intended_use": [
-            "Course project / research experiments on SQuAD v1 style QA.",
-            "Offline evaluation and demonstrations.",
-        ],
     }
     (run_dir / "metadata.json").write_text(
         json.dumps(meta, ensure_ascii=False, indent=2),
@@ -522,6 +521,7 @@ def main() -> None:
         report_to=[],
         seed=cfg.seed,
         logging_steps=cfg.logging_steps,
+        disable_tqdm=True,
         fp16=cfg.fp16,
         warmup_ratio=cfg.warmup_ratio,
         weight_decay=cfg.weight_decay,
@@ -536,22 +536,13 @@ def main() -> None:
 
     training_args = TrainingArguments(**ta_kwargs)
 
-    # Prepare lists for metrics
+    # Prepare lists for compute_em_f1()
     eval_examples_list = [eval_examples[i] for i in range(len(eval_examples))]
     eval_features_list = [eval_features[i] for i in range(len(eval_features))]
 
-    def compute_metrics(eval_pred):
-        # Logits -> EM/F1
-        start_logits, end_logits = eval_pred.predictions
-        return compute_em_f1(
-            eval_examples=eval_examples_list,
-            eval_features=eval_features_list,
-            raw_predictions=(np.array(start_logits), np.array(end_logits)),
-        )
-
     # Start MLflow run
     with mlflow.start_run(run_name=cfg.run_name):
-        #team/env/platform
+        # team/env/platform
         set_run_tags(team=cfg.team_name)
 
         # Save the exact config used for this run (train.yaml)
@@ -569,7 +560,6 @@ def main() -> None:
             )
             for k, v in stats.items():
                 mlflow.log_metric(k, v)
-            # keep for model card
             data_stats.update(stats)
 
         # Tiny sanity check (before training)
@@ -600,34 +590,47 @@ def main() -> None:
             train_dataset=train_features,
             eval_dataset=eval_features,
             tokenizer=tokenizer,
-            compute_metrics=compute_metrics,
         )
 
         train_result = trainer.train()
-        eval_result = trainer.evaluate()
 
-        # Get current EM/F1
-        cur_f1 = float(eval_result.get("eval_f1", eval_result.get("f1", -1.0)))
-        cur_em = float(eval_result.get("eval_em", eval_result.get("em", -1.0)))
+        # Always compute EM/F1 via predict (stable across versions)
+        pred_out = trainer.predict(eval_features)
+        start_logits, end_logits = pred_out.predictions
 
-        # Error analysis report (30 cases)
+        qa_metrics = compute_em_f1(
+            eval_examples=eval_examples_list,
+            eval_features=eval_features_list,
+            raw_predictions=(np.array(start_logits), np.array(end_logits)),
+        )
+
+        # current EM/F1
+        cur_f1 = float(qa_metrics.get("f1", -1.0))
+        cur_em = float(qa_metrics.get("em", qa_metrics.get("exact_match", -1.0)))
+
+        # Error analysis report (sample 30)
         report_path = write_error_report(
             run_dir=run_dir,
             trainer=trainer,
+            eval_features=eval_features,
             eval_examples_list=eval_examples_list,
             eval_features_list=eval_features_list,
             seed=cfg.seed,
+            n_total=30,
             n_each=10,
         )
         mlflow.log_artifact(str(report_path), artifact_path="reports")
 
-        # Log metrics
+        # Log metrics (train + qa + runtime)
         metrics: Dict[str, float] = {}
         if "train_loss" in train_result.metrics:
             metrics["train_loss"] = float(train_result.metrics["train_loss"])
-        for k, v in eval_result.items():
-            if isinstance(v, (int, float)):
-                metrics[k] = float(v)
+
+        # log qa metrics with eval_ prefix
+        for k, v in qa_metrics.items():
+            if isinstance(v, (int, float, np.floating)):
+                metrics[f"eval_{k}"] = float(v)
+
         log_metrics(metrics)
 
         # Write MODEL_CARD + metadata (copied to best if updated)

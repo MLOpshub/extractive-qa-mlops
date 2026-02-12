@@ -4,8 +4,8 @@ model_name: bert-base-uncased
 max_length: 384
 doc_stride: 128
 
-num_train_samples: null  #87599
-num_eval_samples: null  #10570
+num_train_samples: 200 
+num_eval_samples: 20
 
 per_device_train_batch_size: 8
 per_device_eval_batch_size: 8
@@ -15,10 +15,10 @@ seed: 42
 
 run_name: auto
 
-output_subdir: "experiments"   # MODELS_DIR/experimentss/<run_name>
+output_subdir: "experiments"   # MODELS_DIR/experiments/<run_name>
 save_best_to: "best"    # MODELS_DIR/best
 
-mlflow_experiment: "bert_squadv1"
+mlflow_experiment: "bert_squad"
 mlflow_tracking_uri: ""
 
 # Additional hyperparameters

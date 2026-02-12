@@ -1,0 +1,49 @@
+{
+  "base_model": "bert-base-uncased",
+  "dataset": "squad",
+  "task": "extractive_qa",
+  "metrics": {
+    "em": -1.0,
+    "f1": -1.0
+  },
+  "data_sizes": {
+    "n_train_examples": 200.0,
+    "n_eval_examples": 20.0,
+    "n_train_features": 200.0,
+    "n_eval_features": 20.0,
+    "train_feat_per_ex": 1.0,
+    "eval_feat_per_ex": 1.0,
+    "ctx_len_mean": 920.715,
+    "ctx_len_p50": 795.0,
+    "ctx_len_p90": 1405.0,
+    "ctx_len_max": 1786.0
+  },
+  "runtime": {
+    "env": "local",
+    "platform": "Windows-10-10.0.26100-SP0"
+  },
+  "train_config": {
+    "max_length": 384,
+    "doc_stride": 128,
+    "learning_rate": 3e-05,
+    "num_train_epochs": 1.0,
+    "per_device_train_batch_size": 8,
+    "per_device_eval_batch_size": 8,
+    "fp16": true,
+    "seed": 42,
+    "warmup_ratio": 0.1,
+    "weight_decay": 0.01
+  },
+  "error_analysis": {
+    "path": "reports/error_cases.json"
+  },
+  "limitations": [
+    "Long context: may miss answers far from the selected window.",
+    "Entity/number confusion when multiple similar mentions exist.",
+    "Sensitive to paraphrases / wording differences."
+  ],
+  "intended_use": [
+    "Course project / research experiments on SQuAD v1 style QA.",
+    "Offline evaluation and demonstrations."
+  ]
+}
