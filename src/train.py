@@ -6,10 +6,12 @@ import inspect
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict
+from datetime import datetime
 
 import yaml
 import mlflow
 import numpy as np
+import random
 
 from transformers import (
     AutoTokenizer,
@@ -22,7 +24,15 @@ from transformers import (
 from src.settings import MODELS_DIR, MLRUNS_DIR
 from src.data import load_squad, preprocess_train_features, preprocess_eval_features
 from src.evaluate import compute_em_f1
-from src.mlflow import setup_mlflow, log_params, log_metrics, log_model_artifacts
+from src.mlflow import (
+    setup_mlflow,
+    log_params,
+    log_metrics,
+    log_model_artifacts,
+    set_run_tags,
+    log_config_artifact,
+)
+from src.best_model import load_best_meta, is_better, save_best_meta
 
 
 @dataclass
@@ -39,13 +49,22 @@ class TrainConfig:
     num_train_epochs: float = 1.0
     seed: int = 42
 
-    run_name: str = "run"
+    run_name: str = "auto"
     output_subdir: str = "experiments"
     save_best_to: str = "best"
 
     mlflow_experiment: str = "bert_squad"
     mlflow_tracking_uri: str = ""  # if empty -> file:<MLRUNS_DIR>
+    
+    fp16: bool = True
+    logging_steps: int = 2000
+    warmup_ratio: float = 0.1
+    weight_decay: float = 0.01 
 
+    team_name: str = "Tengzhe_Deepthi_Reda"
+
+    log_ctx_stats: bool = True
+    ctx_stats_n: int = 200
 
 def read_config(path: str) -> TrainConfig:
     with open(path, "r", encoding="utf-8") as f:
@@ -66,20 +85,85 @@ def read_config(path: str) -> TrainConfig:
         cfg.num_train_samples = int(cfg.num_train_samples)
     if cfg.num_eval_samples is not None:
         cfg.num_eval_samples = int(cfg.num_eval_samples)
+    cfg.log_ctx_stats = bool(cfg.log_ctx_stats) if isinstance(cfg.log_ctx_stats, bool) else str(cfg.log_ctx_stats).lower() == "true"
+    cfg.ctx_stats_n = int(cfg.ctx_stats_n)
 
     return cfg
 
 
-def ensure_empty_dir(p: Path) -> None:
+def remove_dir(p: Path) -> None:
     if p.exists():
         shutil.rmtree(p)
-    p.mkdir(parents=True, exist_ok=True)
-
 
 def copy_dir(src: Path, dst: Path) -> None:
-    ensure_empty_dir(dst)
-    shutil.copytree(src, dst, dirs_exist_ok=True)
+    remove_dir(dst)
+    shutil.copytree(src, dst)  
 
+# automatic naming experiments
+def fmt_lr(lr: float) -> str:
+    s = f"{lr:.0e}"          # 3e-05
+    return s.replace("e-0", "e-").replace("e+0", "e+")
+
+def fmt_epoch(e: float) -> str:
+    return str(int(e)) if float(e).is_integer() else str(e).replace(".", "p")
+
+def resolve_run_name(cfg: TrainConfig) -> None:
+    if (not cfg.run_name) or (cfg.run_name == "auto"):
+        ts = datetime.now().strftime("%Y%m%d-%H%M%S")
+        model_short = cfg.model_name.split("/")[-1]
+        cfg.run_name = (
+            f"{ts}_{model_short}_lr{fmt_lr(cfg.learning_rate)}"
+            f"_bs{cfg.per_device_train_batch_size}_e{fmt_epoch(cfg.num_train_epochs)}"
+            f"_l{cfg.max_length}_s{cfg.doc_stride}"
+        )
+
+def sanity_check_answers(ds, n: int = 50, seed: int = 42) -> Dict[str, float]:
+    """SQuAD v1 sanity check: answer text should appear in context (sampled)."""
+    n = min(n, len(ds))
+    rnd = random.Random(seed)
+    idxs = rnd.sample(range(len(ds)), n)
+
+    ok = 0
+    for i in idxs:
+        ex = ds[i]
+        ans = ex["answers"]["text"][0]   # v1: always has an answer
+        if ans in ex["context"]:
+            ok += 1
+
+    return {
+        "answer_in_context_rate": float(ok / n) if n > 0 else 0.0,
+        "answer_checked": float(n),
+    }
+
+def sample_context_stats(ds, n: int = 200, seed: int = 42) -> Dict[str, float]:
+    """Sample N examples and compute context length stats (chars)."""
+    n = min(n, len(ds))
+    rnd = random.Random(seed)
+    idxs = rnd.sample(range(len(ds)), n)
+    lens = sorted(len(ds[i]["context"]) for i in idxs)
+    return {
+        "ctx_len_mean": float(sum(lens) / len(lens)),
+        "ctx_len_p50": float(lens[len(lens) // 2]),
+        "ctx_len_p90": float(lens[int(len(lens) * 0.9) - 1]),
+        "ctx_len_max": float(lens[-1]),
+    }
+
+def log_data_profile(train_ds, eval_ds, train_features, eval_features, ctx_stats_n: int, seed: int) -> Dict[str, float]:
+    """Compute light-weight dataset and feature stats to log to MLflow."""
+    stats: Dict[str, float] = {}
+
+    stats["n_train_examples"] = float(len(train_ds))
+    stats["n_eval_examples"] = float(len(eval_ds))
+
+    stats["n_train_features"] = float(len(train_features))
+    stats["n_eval_features"] = float(len(eval_features))
+
+    stats["train_feat_per_ex"] = float(len(train_features) / max(1, len(train_ds)))
+    stats["eval_feat_per_ex"] = float(len(eval_features) / max(1, len(eval_ds)))
+
+    stats.update(sample_context_stats(train_ds, n=ctx_stats_n, seed=seed))
+
+    return stats
 
 def main() -> None:
     parser = argparse.ArgumentParser()
@@ -87,8 +171,9 @@ def main() -> None:
     args = parser.parse_args()
 
     cfg = read_config(args.config)
+    resolve_run_name(cfg)
     set_seed(cfg.seed)
-
+    
     # MLflow setup
     tracking_uri = cfg.mlflow_tracking_uri.strip()
     if not tracking_uri:
@@ -142,12 +227,12 @@ def main() -> None:
         per_device_eval_batch_size=cfg.per_device_eval_batch_size,
         num_train_epochs=cfg.num_train_epochs,
         logging_strategy="steps",
-        logging_steps=2000,
         report_to=[],
-        fp16=True,
         seed=cfg.seed,
-        warmup_ratio=0.1,
-        weight_decay=0.01,
+        logging_steps=cfg.logging_steps,
+        fp16=cfg.fp16,
+        warmup_ratio=cfg.warmup_ratio,
+        weight_decay=cfg.weight_decay,
     )
     sig = inspect.signature(TrainingArguments.__init__).parameters
     if "evaluation_strategy" in sig:
@@ -174,6 +259,29 @@ def main() -> None:
 
     # Start MLflow run
     with mlflow.start_run(run_name=cfg.run_name):
+        #team/env/platform
+        set_run_tags(team=cfg.team_name)
+
+        # Save the exact config used for this run (train.yaml)
+        log_config_artifact(args.config)
+
+        # Light data profiling (before training)
+        if cfg.log_ctx_stats:
+            stats = log_data_profile(
+                train_ds=train_ds,
+                eval_ds=eval_ds,
+                train_features=train_features,
+                eval_features=eval_features,
+                ctx_stats_n=cfg.ctx_stats_n,
+                seed=cfg.seed,
+            )
+            for k, v in stats.items():
+                mlflow.log_metric(k, v)
+
+        # Tiny sanity check (before training)
+        check = sanity_check_answers(train_ds, n=50, seed=cfg.seed)
+        mlflow.log_metrics(check)
+
         log_params(
             {
                 "dataset_name": cfg.dataset_name,
@@ -181,6 +289,8 @@ def main() -> None:
                 "max_length": cfg.max_length,
                 "doc_stride": cfg.doc_stride,
                 "train_samples": cfg.num_train_samples,
+                "train_size": len(train_ds),
+                "eval_size": len(eval_ds),
                 "eval_samples": cfg.num_eval_samples,
                 "train_batch_size": cfg.per_device_train_batch_size,
                 "eval_batch_size": cfg.per_device_eval_batch_size,
@@ -202,6 +312,11 @@ def main() -> None:
         train_result = trainer.train()
         eval_result = trainer.evaluate()
 
+        # Get current EM/F1
+        cur_f1 = float(eval_result.get("eval_f1", eval_result.get("f1", -1.0)))
+        cur_em = float(eval_result.get("eval_em", eval_result.get("em", -1.0)))
+
+
         # Log metrics
         metrics: Dict[str, float] = {}
         if "train_loss" in train_result.metrics:
@@ -219,10 +334,27 @@ def main() -> None:
         log_model_artifacts(run_dir)
 
     # Update best model folder
-    copy_dir(run_dir, best_dir)
+    # Update best (F1 first, EM second)
+    best_meta = load_best_meta(best_dir)
+    best_f1 = float(best_meta.get("best_f1", -1.0))
+    best_em = float(best_meta.get("best_em", -1.0))
+
+    if is_better(cur_f1, cur_em, best_f1, best_em):
+        copy_dir(run_dir, best_dir)
+        save_best_meta(
+            best_dir,
+            {
+                "best_f1": cur_f1,
+                "best_em": cur_em,
+                "best_run": cfg.run_name,
+                "best_path": str(best_dir),
+            },
+        )
+        print(f"Updated best model at: {best_dir} (f1={cur_f1:.2f}, em={cur_em:.2f})")
+    else:
+        print(f"Keep best model (best_f1={best_f1:.2f}, best_em={best_em:.2f})")
 
     print(f"Saved run model to: {run_dir}")
-    print(f"Updated best model at: {best_dir}")
     print(f"MLflow tracking URI: {tracking_uri}")
 
 

@@ -1,0 +1,23 @@
+experiments:
+  - name: baseline
+    overrides: {}
+
+  - name: lr2e-5
+    overrides:
+      learning_rate: 0.00002   # 2e-5
+
+  - name: lr5e-5
+    overrides:
+      learning_rate: 0.00005   # 5e-5
+
+  - name: e2
+    overrides:
+      num_train_epochs: 2
+
+  - name: l512
+    overrides:
+      max_length: 512
+
+  - name: s64
+    overrides:
+      doc_stride: 64

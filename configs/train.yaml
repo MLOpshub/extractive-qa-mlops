@@ -1,4 +1,4 @@
-dataset_name: squad
+dataset_name: SQuAD v1
 model_name: bert-base-uncased
 
 max_length: 384
@@ -6,18 +6,30 @@ doc_stride: 128
 
 num_train_samples: null  #87599
 num_eval_samples: null  #10570
-num_train_epochs: 2
 
 per_device_train_batch_size: 8
 per_device_eval_batch_size: 8
-learning_rate: 0.00003
+learning_rate: 0.00003 # 3e-5
 num_train_epochs: 1
 seed: 42
 
-run_name: "2026-02-11_bert_base_lr3e-5_bs8_e2"
+run_name: auto
 
-output_subdir: "runs"   # MODELS_DIR/runs/<run_name>
+output_subdir: "experiments"   # MODELS_DIR/experimentss/<run_name>
 save_best_to: "best"    # MODELS_DIR/best
 
-mlflow_experiment: "bert_squad"
+mlflow_experiment: "bert_squadv1"
 mlflow_tracking_uri: ""
+
+# Additional hyperparameters
+fp16: true
+logging_steps: 500
+warmup_ratio: 0.1
+weight_decay: 0.01
+
+# tags for MLflow
+team_name: "Tengzhe_Deepthi_Reda"
+
+# dataset profiling
+log_ctx_stats: true
+ctx_stats_n: 200
