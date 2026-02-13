@@ -29,7 +29,7 @@ Extractive QA:
 - Output: `answer_text`, `start_char`, `end_char`, and a confidence score (optional)
 
 ### Dataset
-- **SQuAD (Stanford Question Answering Dataset)**  
+- **SQuAD (Stanford Question Answering Dataset)**
 We use SQuAD to fine-tune a pretrained BERT-style model for span prediction.
 
 ### Data split
@@ -183,4 +183,3 @@ Install dependencies:
 uv sync
 # or: pip install -r requirements.txt
 ```
-
