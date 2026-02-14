@@ -1,6 +1,6 @@
 import pytest
 
-from extractive_qa_mlops.data import (
+from extractive_qa_mlops.text_utils import (
     best_window_match,
     chunk_text,
     iter_non_empty,

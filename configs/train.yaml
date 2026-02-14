@@ -1,0 +1,35 @@
+dataset_name: "squad"   # SQuAD v1
+model_name: bert-base-uncased
+
+max_length: 384
+doc_stride: 128
+
+num_train_samples: null
+num_eval_samples: null
+
+per_device_train_batch_size: 8
+per_device_eval_batch_size: 8
+learning_rate: 0.00003 # 3e-5
+num_train_epochs: 1
+seed: 42
+
+run_name: auto
+
+output_subdir: "experiments"   # MODELS_DIR/experiments/<run_name>
+save_best_to: "best"    # MODELS_DIR/best
+
+mlflow_experiment: "bert_squad"
+mlflow_tracking_uri: ""
+
+# Additional hyperparameters
+fp16: true
+logging_steps: 500
+warmup_ratio: 0.1
+weight_decay: 0.01
+
+# tags for MLflow
+team_name: "Tengzhe_Deepthi_Reda"
+
+# dataset profiling
+log_ctx_stats: true
+ctx_stats_n: 200
