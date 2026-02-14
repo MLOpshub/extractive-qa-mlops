@@ -44,14 +44,18 @@ def main() -> None:
     root = repo_root()
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--train", default="configs/train.yaml", help="Baseline train config")
+    parser.add_argument(
+        "--train", default="configs/train.yaml", help="Baseline train config"
+    )
     parser.add_argument("--sweep", default="configs/sweep.yaml", help="Sweep config")
     parser.add_argument(
         "--train_entry",
         default="src.train",
         help='Train entry: module ("src.train") or script path ("src/train.py")',
     )
-    parser.add_argument("--out_dir", default="configs/_sweep_tmp", help="Temp dir for merged configs")
+    parser.add_argument(
+        "--out_dir", default="configs/_sweep_tmp", help="Temp dir for merged configs"
+    )
     args = parser.parse_args()
 
     train_path = resolve_from_root(args.train, root)
@@ -64,7 +68,9 @@ def main() -> None:
     experiments = sweep_cfg.get("experiments") or []
 
     if not experiments:
-        raise ValueError("No experiments found in sweep.yaml (expected key: experiments)")
+        raise ValueError(
+            "No experiments found in sweep.yaml (expected key: experiments)"
+        )
 
     for exp in experiments:
         name = exp.get("name") or "exp"
@@ -76,7 +82,9 @@ def main() -> None:
         merged.setdefault("run_name", "auto")
 
         merged_path = out_dir / f"train_{name}.yaml"
-        merged_path.write_text(yaml.safe_dump(merged, sort_keys=False), encoding="utf-8")
+        merged_path.write_text(
+            yaml.safe_dump(merged, sort_keys=False), encoding="utf-8"
+        )
 
         print(f"\n=== Running experiment: {name} ===")
         cmd = build_train_cmd(args.train_entry, merged_path)

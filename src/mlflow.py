@@ -26,6 +26,7 @@ def set_run_tags(team: str, env: Optional[str] = None) -> None:
     mlflow.set_tag("env", env or detected_env)
     mlflow.set_tag("platform", platform.platform())
 
+
 def log_params(params: Dict[str, Any]) -> None:
     """Log hyperparameters"""
     mlflow.log_params(params)

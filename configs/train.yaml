@@ -1,4 +1,4 @@
-dataset_name: "squad"   # SQuAD v1  
+dataset_name: "squad"   # SQuAD v1
 model_name: bert-base-uncased
 
 max_length: 384

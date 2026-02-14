@@ -70,7 +70,9 @@ def compute_em_f1(
 ) -> Dict[str, float]:
     # EM/F1 for SQuAD
     metric = evaluate.load("squad")
-    pred_dict = postprocess_qa_predictions(eval_examples, eval_features, raw_predictions)
+    pred_dict = postprocess_qa_predictions(
+        eval_examples, eval_features, raw_predictions
+    )
 
     predictions = [{"id": k, "prediction_text": v} for k, v in pred_dict.items()]
     references = [{"id": ex["id"], "answers": ex["answers"]} for ex in eval_examples]

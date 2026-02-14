@@ -5,7 +5,7 @@ import shutil
 import inspect
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict
+from typing import Dict
 from datetime import datetime
 
 import os
@@ -206,9 +206,9 @@ def normalize_answer(s: str) -> str:
 def write_error_report(
     run_dir: Path,
     trainer: Trainer,
-    eval_features,              # Dataset (NOT list)
+    eval_features,  # Dataset (NOT list)
     eval_examples_list,
-    eval_features_list,         # list only for offset_mapping lookup
+    eval_features_list,  # list only for offset_mapping lookup
     seed: int = 42,
     n_total: int = 30,
     n_each: int = 10,
@@ -256,8 +256,12 @@ def write_error_report(
             offsets = eval_features_list[fi]["offset_mapping"]
 
             # top indices
-            s_top = sorted(range(len(s)), key=lambda j: s[j], reverse=True)[:n_best_size]
-            e_top = sorted(range(len(e)), key=lambda j: e[j], reverse=True)[:n_best_size]
+            s_top = sorted(range(len(s)), key=lambda j: s[j], reverse=True)[
+                :n_best_size
+            ]
+            e_top = sorted(range(len(e)), key=lambda j: e[j], reverse=True)[
+                :n_best_size
+            ]
 
             for si in s_top:
                 for ei in e_top:
@@ -293,7 +297,8 @@ def write_error_report(
                 "id": exid,
                 "question": question,
                 "context": (
-                    context[:ctx_max_chars] + ("..." if len(context) > ctx_max_chars else "")
+                    context[:ctx_max_chars]
+                    + ("..." if len(context) > ctx_max_chars else "")
                 ),
                 "gold_answer": gold,
                 "pred_answer": pred,
@@ -340,7 +345,9 @@ def write_error_report(
     reports_dir = run_dir / "reports"
     reports_dir.mkdir(parents=True, exist_ok=True)
     out_path = reports_dir / "error_cases.json"
-    out_path.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
+    out_path.write_text(
+        json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
     return out_path
 
 

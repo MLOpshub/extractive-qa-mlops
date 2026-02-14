@@ -31,7 +31,7 @@ def preprocess_train_features(
         padding="max_length",
     )
 
-    # Map each feature back 
+    # Map each feature back
     sample_mapping = tokenized.pop("overflow_to_sample_mapping")
     offset_mapping = tokenized.pop("offset_mapping")
 
@@ -42,7 +42,7 @@ def preprocess_train_features(
         sample_idx = sample_mapping[i]
         answers = examples["answers"][sample_idx]
 
-        # If no answer 
+        # If no answer
         if len(answers["answer_start"]) == 0:
             start_positions.append(0)
             end_positions.append(0)
@@ -64,7 +64,10 @@ def preprocess_train_features(
             context_end -= 1
 
         # If answer is not fully inside the context span, label as (0,0)
-        if not (offsets[context_start][0] <= start_char and offsets[context_end][1] >= end_char):
+        if not (
+            offsets[context_start][0] <= start_char
+            and offsets[context_end][1] >= end_char
+        ):
             start_positions.append(0)
             end_positions.append(0)
             continue
@@ -83,6 +86,7 @@ def preprocess_train_features(
     tokenized["start_positions"] = start_positions
     tokenized["end_positions"] = end_positions
     return tokenized
+
 
 def preprocess_eval_features(
     examples: Dict[str, Any],
@@ -112,9 +116,11 @@ def preprocess_eval_features(
     for i in range(len(tokenized["offset_mapping"])):
         seq_ids = tokenized.sequence_ids(i)
         tokenized["offset_mapping"][i] = [
-            (o if seq_ids[k] == 1 else None) for k, o in enumerate(tokenized["offset_mapping"][i])
+            (o if seq_ids[k] == 1 else None)
+            for k, o in enumerate(tokenized["offset_mapping"][i])
         ]
 
-    tokenized["example_id"] = [examples["id"][sample_mapping[i]] for i in range(len(sample_mapping))]
+    tokenized["example_id"] = [
+        examples["id"][sample_mapping[i]] for i in range(len(sample_mapping))
+    ]
     return tokenized
-

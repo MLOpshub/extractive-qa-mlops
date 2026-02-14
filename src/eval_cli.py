@@ -35,7 +35,10 @@ def main() -> None:
 
     eval_features = eval_ds.map(
         lambda x: preprocess_eval_features(
-            x, tokenizer=tokenizer, max_length=args.max_length, doc_stride=args.doc_stride
+            x,
+            tokenizer=tokenizer,
+            max_length=args.max_length,
+            doc_stride=args.doc_stride,
         ),
         batched=True,
         remove_columns=eval_ds.column_names,
@@ -51,7 +54,9 @@ def main() -> None:
     end_logits_all = []
 
     for feat in eval_features_list:
-        inputs = {k: np.array([feat[k]]) for k in ["input_ids", "attention_mask"] if k in feat}
+        inputs = {
+            k: np.array([feat[k]]) for k in ["input_ids", "attention_mask"] if k in feat
+        }
         if "token_type_ids" in feat:
             inputs["token_type_ids"] = np.array([feat["token_type_ids"]])
 
@@ -78,6 +83,7 @@ def main() -> None:
 def torch_tensor(x: np.ndarray):
     # Numpy -> torch tensor (lazy import)
     import torch
+
     return torch.from_numpy(x)
 
 
