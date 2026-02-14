@@ -26,7 +26,7 @@ SQuAD dataset → preprocessing/tokenization → BERT QA training on Colab GPU �
 ### Task
 Extractive QA:
 - Input: `question`, `context`
-- Output: `answer_text`, `start_char`, `end_char`, and a confidence score (optional)
+- Output: `answer_text`, `start_char`, `end_char`, and a confidence score
 
 ### Dataset
 - **SQuAD (Stanford Question Answering Dataset)**
