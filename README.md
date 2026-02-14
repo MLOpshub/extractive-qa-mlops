@@ -163,7 +163,7 @@ Example structure (adjust to your repo):
    - dataset download/load
    - preprocessing/tokenization
    - model fine-tuning
-3. Save **all artifacts** to a single Google Drive folder.
+3. Save **all artifacts** to a single Google Drive folder (**https://drive.google.com/drive/folders/10aV6fYGGOgDyS4CmPr3TiVpQJ7fiwEjA?usp=drive_link**).
 
 Expected artifacts in Drive (example):
 - `config.json`
