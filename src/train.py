@@ -521,7 +521,7 @@ def main() -> None:
         report_to=[],
         seed=cfg.seed,
         logging_steps=cfg.logging_steps,
-        disable_tqdm=True,
+        disable_tqdm=False,
         fp16=cfg.fp16,
         warmup_ratio=cfg.warmup_ratio,
         weight_decay=cfg.weight_decay,
