@@ -4,25 +4,25 @@
 - **Base model**: bert-base-uncased
 - **Dataset**: squad
 - **Task**: Extractive Question Answering (SQuAD-style)
-- **Validation metrics**: EM=-1.0000, F1=-1.0000
+- **Validation metrics**: EM=81.3718, F1=88.7744
 
 ## Training data sizes
-- train examples: 200
-- eval examples: 20
-- train features (after sliding window): 200
-- eval features (after sliding window): 20
-- train feat/example: 1.000
-- eval feat/example: 1.000
+- train examples: 87599
+- eval examples: 10570
+- train features (after sliding window): 88524
+- eval features (after sliding window): 10784
+- train feat/example: 1.011
+- eval feat/example: 1.020
 
 ## Runtime
-- env: local
-- platform: Windows-10-10.0.26100-SP0
+- env: colab
+- platform: Linux-6.6.105+-x86_64-with-glibc2.35
 
 ## Training config (key)
 - max_length: 384
 - doc_stride: 128
 - learning_rate: 3e-05
-- epochs: 1.0
+- epochs: 2.0
 - batch_size(train): 8
 - fp16: True
 - seed: 42
@@ -40,4 +40,4 @@
 - Sensitive to paraphrases / wording differences.
 
 ## Notes
-- MLflow tracking URI: file:D:\projet_esilv\MLOps\extractive-qa-mlops\mlruns
+- MLflow tracking URI: file:/content/drive/MyDrive/extractive-qa-mlops/mlruns

@@ -7,8 +7,8 @@ from pathlib import Path
 import numpy as np
 from transformers import AutoTokenizer, AutoModelForQuestionAnswering
 
-from src.data import load_squad, preprocess_eval_features
-from src.evaluate import compute_em_f1
+from extractive_qa_mlops.data import load_squad, preprocess_eval_features
+from extractive_qa_mlops.evaluate import compute_em_f1
 
 
 def main() -> None:

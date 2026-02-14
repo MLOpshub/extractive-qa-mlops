@@ -21,6 +21,7 @@ def deep_update(base: Dict[str, Any], overrides: Dict[str, Any]) -> Dict[str, An
 
 
 def repo_root() -> Path:
+    # scripts/sweep.py -> parents[1] is repo root
     return Path(__file__).resolve().parents[1]
 
 
@@ -32,8 +33,10 @@ def resolve_from_root(p: str, root: Path) -> Path:
 def build_train_cmd(train_entry: str, merged_config: Path) -> list[str]:
     """
     train_entry supports:
-      - module path: "src.train"  -> python -m src.train
-      - file path:   "src/train.py" -> python src/train.py
+      - module path: "extractive_qa_mlops.train"
+          -> python -m extractive_qa_mlops.train
+      - file path:   "src/extractive_qa_mlops/train.py"
+          -> python src/extractive_qa_mlops/train.py
     """
     if train_entry.endswith(".py") or "/" in train_entry or "\\" in train_entry:
         return [sys.executable, train_entry, "--config", str(merged_config)]
@@ -50,8 +53,11 @@ def main() -> None:
     parser.add_argument("--sweep", default="configs/sweep.yaml", help="Sweep config")
     parser.add_argument(
         "--train_entry",
-        default="src.train",
-        help='Train entry: module ("src.train") or script path ("src/train.py")',
+        default="extractive_qa_mlops.train",
+        help=(
+            'Train entry: module ("extractive_qa_mlops.train") '
+            'or script path ("src/extractive_qa_mlops/train.py")'
+        ),
     )
     parser.add_argument(
         "--out_dir", default="configs/_sweep_tmp", help="Temp dir for merged configs"

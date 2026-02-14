@@ -27,10 +27,14 @@ from transformers import (
     set_seed,
 )
 
-from src.settings import MODELS_DIR, MLRUNS_DIR
-from src.data import load_squad, preprocess_train_features, preprocess_eval_features
-from src.evaluate import compute_em_f1
-from src.mlflow import (
+from extractive_qa_mlops.settings import MODELS_DIR, MLRUNS_DIR
+from extractive_qa_mlops.data import (
+    load_squad,
+    preprocess_train_features,
+    preprocess_eval_features,
+)
+from extractive_qa_mlops.evaluate import compute_em_f1
+from extractive_qa_mlops.mlflow import (
     setup_mlflow,
     log_params,
     log_metrics,
@@ -38,7 +42,7 @@ from src.mlflow import (
     set_run_tags,
     log_config_artifact,
 )
-from src.best_model import load_best_meta, is_better, save_best_meta
+from extractive_qa_mlops.best_model import load_best_meta, is_better, save_best_meta
 
 
 @dataclass
