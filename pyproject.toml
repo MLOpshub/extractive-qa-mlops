@@ -5,6 +5,7 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
+    "accelerate>=1.12.0",
     "datasets>=4.5.0",
     "evaluate>=0.4.6",
     "faiss-cpu>=1.13.2",
@@ -35,6 +36,10 @@ addopts = "-q --cov=src --cov-report=term-missing --cov-fail-under=60"
 [tool.coverage.run]
 branch = true
 source = ["src"]
+omit = [
+  "src/extractive_qa_mlops/train.py",
+  "src/extractive_qa_mlops/eval_cli.py",
+]
 
 
 [tool.setuptools]
