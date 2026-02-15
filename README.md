@@ -7,9 +7,9 @@ SQuAD dataset → preprocessing/tokenization → BERT QA training on Colab GPU �
 
 ---
 
-## 1) Project Overview
+## 1 Project Overview
 
-**Goal:** Given a *question* and a *context paragraph*, return the **answer span** extracted from the context (or “no answer” when not supported).
+**Goal:** Given a *question* and a *context paragraph*, return the **answer span** extracted from the context.
 
 **Why this project:** It demonstrates an end-to-end workflow that includes:
 - reproducible environment & dependencies
@@ -17,11 +17,32 @@ SQuAD dataset → preprocessing/tokenization → BERT QA training on Colab GPU �
 - model artifact management
 - API serving
 - containerization
-- CI/testing hooks (as applicable per course requirements)
+- CI/testing hooks
 
+### 2.2 Setup & Usage
+
+**A) Training on Colab (GPU)**
+1. Open the training notebook in Colab.
+2. Run:
+   - Set environment
+   - Run `sweep.py` and save all models
+   - Evaluate best model on SQuAD
+   - Run MLflow UI via Colab
+
+> **all artifacts** to a single Google Drive folder (**https://drive.google.com/drive/folders/10aV6fYGGOgDyS4CmPr3TiVpQJ7fiwEjA?usp=drive_link**).
+
+**B) Download best model to local**
+Download the best checkpoint folder from Drive into:
+
+**C) Run FastAPI locally**
+Install dependencies:
+```bash
+uv sync
+# or: pip install -r requirements.txt
+```
 ---
 
-## 2) Problem Definition & Data
+## 2 Problem Definition & Data
 
 ### Task
 Extractive QA:
@@ -29,7 +50,7 @@ Extractive QA:
 - Output: `answer_text`, `start_char`, `end_char`, and a confidence score
 
 ### Dataset
-- **SQuAD (Stanford Question Answering Dataset)**
+- **SQuAD v1 (Stanford Question Answering Dataset)**
 We use SQuAD to fine-tune a pretrained BERT-style model for span prediction.
 
 ### Data split
@@ -37,101 +58,9 @@ We use SQuAD to fine-tune a pretrained BERT-style model for span prediction.
 
 ---
 
-## 3) System Architecture
+## 3 System Architecture
 
-### Components
-1. **Data & preprocessing**
-   - Load SQuAD
-   - Clean and normalize text (lightweight)
-   - Tokenize with a Hugging Face tokenizer
-   - Map character-level answer spans → token-level start/end indices
-
-2. **Training (Colab GPU)**
-   - Fine-tune a BERT QA model on SQuAD
-   - Track metrics during training (loss / EM / F1 if implemented)
-   - Save checkpoints and the best model
-
-3. **Artifact management (Google Drive)**
-   - All training artifacts saved under one Drive folder:
-     - model weights
-     - tokenizer files
-     - training config
-     - metrics logs (if available)
-
-4. **Local inference**
-   - Download `models/best/` from Drive to local project folder
-   - FastAPI loads the model at startup and serves predictions
-
-5. **Containerization**
-   - Docker image for running the inference service consistently
-
----
-
-## 4) MLOps Practices
-
-This repository aims to follow the course expectations (structure, reproducibility, serving, containerization, testing, etc.). :contentReference[oaicite:1]{index=1}
-
-### Reproducible environment
-- Python dependencies are pinned (see `pyproject.toml` / lockfile if included)
-- Recommended: `uv` for env & dependency management (course standard)
-
-### Version control (Git/GitHub)
-- Feature branches + PR reviews (team workflow)
-- Clear commit messages with meaningful changes
-
-### Testing & code quality
-- Unit tests (recommended target coverage per course)
-- Pre-commit hooks (formatting/linting)
-
-### Model artifacts
-Saved artifacts are organized so the inference service can load them directly:
-- `models/best/` is the canonical folder used by FastAPI
-
----
-
-## 5) Monitoring & Reliability
-
-Basic reliability considerations:
-- `/health` endpoint to confirm the API is running
-- structured logs for requests and inference latency (if implemented)
-- input validation via Pydantic models
-- graceful error messages for missing/invalid inputs
-
-(You can extend this with Prometheus metrics, request tracing, etc.)
-
----
-
-## 6) Team Collaboration
-
-- Work is tracked via Git commit history and PR reviews.
-- Each member should understand the full pipeline: data → training → artifacts → serving.
-
-> Add your team member names and roles here:
-- Member 1 — Data/Preprocessing
-- Member 2 — Training/Evaluation
-- Member 3 — Serving (FastAPI)
-- Member 4 — Docker/CI/CD/Monitoring
-
----
-
-## 7) Limitations & Future Work
-
-**Limitations**
-- Extractive QA depends on the answer being present in the provided context.
-- Performance depends on domain similarity between SQuAD and real user contexts.
-
-**Future work**
-- Add retrieval (RAG-style) to fetch relevant contexts automatically
-- Add better confidence calibration and abstention (“no answer”)
-- Improve monitoring (metrics, dashboards)
-- Automate model registry + deployment using MLflow
-
----
-
-# Repository Structure
-
-Example structure (adjust to your repo):
-
+### 3.1 Repository Structure (*need to be modified after later*)
 .
 ├── app/
 │ ├── main.py # FastAPI entrypoint
@@ -152,34 +81,125 @@ Example structure (adjust to your repo):
 ├── uv.lock # if using uv
 └── README.md
 
+### 3.2 Data & preprocessing
+   - Load SQuAD
+   - Clean and normalize text (lightweight)
+   - Tokenize with a Hugging Face tokenizer
+   - Map character-level answer spans → token-level start/end indices
+
+### 3.3 Training (Colab GPU)
+   - Fine-tune a BERT QA model on SQuAD
+   - After training, we run Trainer.predict() on validation features and compute EM/F1 via our compute_em_f1() post-processing
+   - Save checkpoints and the best model
+
+### 3.4 Artifact management (Google Drive)
+
+All training outputs are stored under a single Google Drive folder so that they persist across Colab sessions.
+We keep **two top-level folders**:
+
+- `artifacts/` — human-friendly training outputs (models, reports, experiment notes)
+- `mlruns/` — MLflow **file store** (runs/metrics/params + logged artifacts)
+
+**Drive layout:**
+```txt
+<extractive-qa-mlops>/
+├─ artifacts/
+│  └─ models/
+│     ├─ best/
+│     │  ├─ checkpoints/
+│     │  ├─ reports/
+│     │  │  └─ error_cases.json
+│     │  ├─ MODEL_CARD.md
+│     │  ├─ metadata.json
+│     │  └─ model.safetensors + tokenizer files (config.json, tokenizer.json, vocab.txt, ...)
+│     └─ experiments/
+│        ├─ <run_name_1>/
+│        │  ├─ checkpoints/
+│        │  ├─ reports/
+│        │  │  └─ error_cases.json
+│        │  ├─ MODEL_CARD.md
+│        │  ├─ metadata.json
+│        │  └─ model.safetensors + tokenizer files
+│        └─ <run_name_2>/ ...
+└─ mlruns/
+   └─ <experiment_id>/
+      ├─ meta.yaml
+      └─ <run_id>/
+         ├─ metrics/
+         ├─ params/
+         ├─ tags/
+         ├─ meta.yaml
+         └─ artifacts/   (e.g., model/...)
+```
+
+**Best model selection:** after each run, we update `artifacts/models/best/` using **F1 (primary) and EM (secondary)** so downstream components can always load the latest best checkpoint.
+
+### 3.5 Local inference
+   - Download `models/best/` from Drive to local project folder
+   - FastAPI loads the model at startup and serves predictions
+
+### 3.6 Containerization
+   - Docker image for running the inference service consistently
+
 ---
 
-# Setup & Usage
+## 4 MLOps Practices
 
-## A) Training on Colab (GPU)
+This repository aims to follow the course expectations (structure, reproducibility, serving, containerization, testing, etc.).
 
-1. Open the training notebook / script in Colab.
-2. Run:
-   - dataset download/load
-   - preprocessing/tokenization
-   - model fine-tuning
-3. Save **all artifacts** to a single Google Drive folder (**https://drive.google.com/drive/folders/10aV6fYGGOgDyS4CmPr3TiVpQJ7fiwEjA?usp=drive_link**).
+### 4.1 Reproducible environment
+- Python dependencies are pinned (see `pyproject.toml` / lockfile)
+- Recommended: `uv` for env & dependency management
 
-Expected artifacts in Drive (example):
-- `config.json`
-- `tokenizer.json` / `vocab.txt` / tokenizer files
-- `pytorch_model.bin` or `model.safetensors`
-- `training_args.json` (optional)
-- `metrics.json` (optional)
+### 4.2 Version control (Git/GitHub)
+- Feature branches + PR reviews
+- Clear commit messages with meaningful changes
 
-## B) Download best model to local
+### 4.3 Testing & code quality
+- Unit tests (recommended target coverage per course)
+- Pre-commit hooks (formatting/linting)
 
-Download the best checkpoint folder from Drive into:
+### 4.4 Model artifacts
+Saved artifacts are organized so the inference service can load them directly:
+- `models/best/` is the canonical folder used by FastAPI
+- Each run produces a `MODEL_CARD.md` + `metadata.json` + `reports/error_cases.json` for traceability
+- `models/best/` is automatically updated using F1 (primary) / EM (secondary)
+---
 
-## C) Run FastAPI locally
+## 5 Monitoring & Reliability
 
-Install dependencies:
-```bash
-uv sync
-# or: pip install -r requirements.txt
-```
+Basic reliability considerations:
+- data profiling metrics (e.g., feature counts, context length stats)
+- `/health` endpoint to confirm the API is running
+- structured logs for requests and inference latency
+- input validation via Pydantic models
+- graceful error messages for missing/invalid input
+
+---
+
+## 6 Team Collaboration
+
+- Work is tracked via Git commit history and PR reviews.
+- Each member should understand the full pipeline: data → training → artifacts → serving.
+
+> Team members
+- Member 1: _Tengzhe ZHANG_ —> Data Preprocessing, Training and Evaluation
+- Member 2 _RAJAGOPAL GAJENDRA Deepthi_ —> Serving
+- Member 3 _MOURAD Reda_ —> Docker, CI, CD and Monitoring
+
+---
+
+## 7 Limitations & Future Work
+
+### 7.1 Limitations
+- Extractive QA depends on the answer being present in the provided context.
+- Performance depends on domain similarity between SQuAD and real user contexts.
+
+### 7.2 Future work
+- Add retrieval (RAG-style) to fetch relevant contexts automatically
+- Add better confidence calibration and abstention (“no answer”)
+- Improve monitoring (metrics, dashboards)
+- Automate model registry + deployment using MLflow
+- Improve span decoding/post-processing (n-best aggregation, length constraints, normalization) to reduce boundary errors and close the EM–F1 gap.
+
+---
