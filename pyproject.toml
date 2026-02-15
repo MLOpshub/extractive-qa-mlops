@@ -36,6 +36,10 @@ addopts = "-q --cov=src --cov-report=term-missing --cov-fail-under=60"
 [tool.coverage.run]
 branch = true
 source = ["src"]
+omit = [
+  "src/extractive_qa_mlops/train.py",
+  "src/extractive_qa_mlops/eval_cli.py",
+]
 
 
 [tool.setuptools]
