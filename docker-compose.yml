@@ -1,0 +1,22 @@
+services:
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - MODEL_DIR=/app/models/best
+
+  ui:
+    image: python:3.11-slim
+    working_dir: /ui
+    volumes:
+      - ./ui:/ui
+    command: >
+      sh -c "pip install --no-cache-dir streamlit requests &&
+             streamlit run streamlit_app.py --server.address 0.0.0.0 --server.port 8501"
+    environment:
+      - API_URL=http://api:8000
+    ports:
+      - "8501:8501"
+    depends_on:
+      - api
