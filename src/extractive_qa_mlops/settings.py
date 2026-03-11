@@ -1,13 +1,12 @@
 from pathlib import Path
 import os
-
 from dataclasses import dataclass
 
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
 DATA_DIR = Path(os.getenv("DATA_DIR", PROJECT_ROOT / "data"))
 MODELS_DIR = Path(os.getenv("MODELS_DIR", PROJECT_ROOT / "artifacts" / "models"))
-MLRUNS_DIR = Path(os.getenv("MLRUNS_DIR", PROJECT_ROOT / "mlruns"))
+MLRUNS_DIR = Path(os.getenv("MLRUNS_DIR", PROJECT_ROOT / "artifacts" / "mlruns"))
 
 
 @dataclass

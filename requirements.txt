@@ -1,7 +1,11 @@
+pytest
 fastapi
 uvicorn[standard]
 pydantic
-transformers
-torch
 streamlit
 requests
+pytest
+httpx
+transformers
+torch
+safetensors

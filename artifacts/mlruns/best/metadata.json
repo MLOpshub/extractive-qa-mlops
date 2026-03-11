@@ -1,0 +1,6 @@
+{
+  "best_f1": 88.77435395605625,
+  "best_em": 81.37180700094608,
+  "best_run": "20260212-234752_bert-base-uncased_lr3e-5_bs8_e2_l384_s128",
+  "best_path": "/content/drive/MyDrive/extractive-qa-mlops/artifacts/models/best"
+}

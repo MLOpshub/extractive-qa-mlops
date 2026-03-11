@@ -1,20 +1,57 @@
-from extractive_qa_mlops.serve import answer_question, build_chunks
+from fastapi.testclient import TestClient
+
+from extractive_qa_mlops.api import app
+
+client = TestClient(app)
 
 
-def test_answer_question_empty():
-    out = answer_question("", "")
-    assert out["answer"] == ""
-    assert out["score"] == 0.0
+def test_root() -> None:
+    response = client.get("/")
+    assert response.status_code == 200
+
+    body = response.json()
+    assert "message" in body
+    assert body["message"] == "Extractive QA API is running"
 
 
-def test_answer_question_match():
-    context = "Paris is beautiful. I studied data engineering in Paris."
-    question = "What city is mentioned?"
-    out = answer_question(context, question)
-    assert out["score"] > 0.0
-    assert "Paris" in out["answer"]
+def test_health() -> None:
+    response = client.get("/health")
+    assert response.status_code == 200
+
+    body = response.json()
+    assert body["status"] == "ok"
+    assert "max_context_chars" in body
+    assert "max_answer_chars" in body
 
 
-def test_build_chunks():
-    out = build_chunks("a" * 200, chunk_size=50, overlap=10)
-    assert out["num_chunks"] > 0
+def test_qa_endpoint() -> None:
+    payload = {
+        "context": "France is a country in Europe. Paris is the capital of France.",
+        "question": "What is the capital of France?",
+    }
+
+    response = client.post("/qa", json=payload)
+    assert response.status_code == 200
+
+    body = response.json()
+    assert "answer" in body
+    assert "score" in body
+    assert "start" in body
+    assert "end" in body
+    assert "settings" in body
+
+
+def test_chunks_endpoint() -> None:
+    payload = {
+        "context": "This is a test context. " * 50,
+        "chunk_size": 100,
+        "overlap": 20,
+    }
+
+    response = client.post("/chunks", json=payload)
+    assert response.status_code == 200
+
+    body = response.json()
+    assert "num_chunks" in body
+    assert "chunks" in body
+    assert isinstance(body["chunks"], list)
