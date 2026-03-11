@@ -129,6 +129,8 @@ def build_chunks(
 
     chunks = chunk_text(context, chunk_size=chunk_size, overlap=overlap)
     return {"num_chunks": len(chunks), "chunks": chunks}
+
+
 # from dataclasses import asdict
 # from typing import Any, Dict, List, Optional
 

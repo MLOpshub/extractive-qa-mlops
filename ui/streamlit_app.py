@@ -51,7 +51,9 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-st.markdown('<div class="app-title">Extractive Question Answering</div>', unsafe_allow_html=True)
+st.markdown(
+    '<div class="app-title">Extractive Question Answering</div>', unsafe_allow_html=True
+)
 st.markdown(
     '<div class="app-subtitle">Professional demo UI for a FastAPI-based extractive QA service.</div>',
     unsafe_allow_html=True,
@@ -93,7 +95,9 @@ with left_col:
         placeholder="Enter your question...",
     )
 
-    chunk_size = st.slider("Chunk Size", min_value=100, max_value=1000, value=300, step=50)
+    chunk_size = st.slider(
+        "Chunk Size", min_value=100, max_value=1000, value=300, step=50
+    )
     overlap = st.slider("Overlap", min_value=0, max_value=200, value=50, step=10)
 
     action_col1, action_col2 = st.columns(2)

@@ -38,7 +38,9 @@ def test_answer_question_match(monkeypatch):
     def fake_get_model_and_tokenizer():
         return DummyTokenizer(), DummyModel()
 
-    monkeypatch.setattr(serve_mod, "get_model_and_tokenizer", fake_get_model_and_tokenizer)
+    monkeypatch.setattr(
+        serve_mod, "get_model_and_tokenizer", fake_get_model_and_tokenizer
+    )
 
     context = "Paris is beautiful. I studied data engineering in Paris."
     question = "What city is mentioned?"

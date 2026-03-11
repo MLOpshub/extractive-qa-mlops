@@ -60,7 +60,7 @@ We use SQuAD to fine-tune a pretrained BERT-style model for span prediction.
 
 ## 3 System Architecture
 
-### 3.1 Repository Structure 
+### 3.1 Repository Structure
 
 
 <img width="3060" height="810" alt="image" src="https://github.com/user-attachments/assets/527099a4-2680-4221-a575-b92d769fd275" />
@@ -229,6 +229,3 @@ Start the Streamlit UI container
 - Improve span decoding/post-processing (n-best aggregation, length constraints, normalization) to reduce boundary errors and close the EM–F1 gap.
 
 ---
-
-
-
