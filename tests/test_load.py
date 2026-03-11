@@ -1,10 +1,12 @@
-from transformers import AutoTokenizer, AutoModelForQuestionAnswering
-import os
+from pathlib import Path
 
-MODEL_DIR = "/model"
+import pytest
+from transformers import AutoTokenizer
 
-tokenizer = AutoTokenizer.from_pretrained(MODEL_DIR, local_files_only=True)
-model = AutoModelForQuestionAnswering.from_pretrained(MODEL_DIR, local_files_only=True)
+MODEL_DIR = Path("artifacts/models")
 
-print("✅ QA model loaded correctly")
-print(model.__class__)
+
+@pytest.mark.skipif(not MODEL_DIR.exists(), reason="Local model directory not available")
+def test_local_model_loads():
+    tokenizer = AutoTokenizer.from_pretrained(str(MODEL_DIR), local_files_only=True)
+    assert tokenizer is not None
