@@ -192,6 +192,28 @@ Basic reliability considerations:
 - Member 3 _MOURAD Reda_ —> Docker, CI, CD and Monitoring
 
 ---
+Docker Setup
+
+This project can be run using Docker and Docker Compose, which will start both:
+FastAPI API service (model inference)
+Streamlit UI (interactive demo)
+
+Prerequisites
+
+Make sure you have installed:
+Docker
+Docker Compose
+
+Running with Docker
+
+Build and start the services:
+```
+docker compose up --build
+```
+This command will:
+Build the Docker image
+Start the FastAPI API container
+Start the Streamlit UI container
 
 ## 7 Limitations & Future Work
 
@@ -207,5 +229,6 @@ Basic reliability considerations:
 - Improve span decoding/post-processing (n-best aggregation, length constraints, normalization) to reduce boundary errors and close the EM–F1 gap.
 
 ---
+
 
 
