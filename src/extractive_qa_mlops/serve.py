@@ -6,7 +6,7 @@ from typing import Any, Dict, Optional
 import torch
 from transformers import AutoModelForQuestionAnswering, AutoTokenizer
 
-from extractive_qa_mlops.settings import QASettings, MLRUNS_DIR
+from extractive_qa_mlops.settings import QASettings, MODELS_DIR
 
 
 _TOKENIZER = None
@@ -15,7 +15,7 @@ _MODEL_PATH = None
 
 
 def get_model_path() -> Path:
-    model_dir = MLRUNS_DIR / "best"
+    model_dir = MODELS_DIR / "best"
 
     if not model_dir.exists():
         raise FileNotFoundError(f"Model artifact directory not found: {model_dir}")
