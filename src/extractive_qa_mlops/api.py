@@ -3,8 +3,7 @@ from __future__ import annotations
 from fastapi import FastAPI
 from pydantic import BaseModel, Field
 
-from extractive_qa_mlops.serve import answer_question, build_chunks
-from extractive_qa_mlops.settings import QASettings
+from extractive_qa_mlops.serve import answer_question, build_chunks, load_serve_config
 
 app = FastAPI(
     title="Extractive QA API",
@@ -37,11 +36,12 @@ def root() -> dict:
 
 @app.get("/health")
 def health() -> dict:
-    settings = QASettings()
+    qa_cfg = load_serve_config().get("qa", {})
     return {
         "status": "ok",
-        "max_context_chars": settings.max_context_chars,
-        "max_answer_chars": settings.max_answer_chars,
+        "max_context_chars": qa_cfg.get("max_context_chars", 4000),
+        "max_answer_chars": qa_cfg.get("max_answer_chars", 200),
+        "inference_max_length": qa_cfg.get("inference_max_length", 512),
     }
 
 

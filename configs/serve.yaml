@@ -1,0 +1,8 @@
+qa:
+  max_context_chars: 4000
+  max_answer_chars: 200
+  inference_max_length: 512
+
+chunking:
+  chunk_size: 500
+  overlap: 50
