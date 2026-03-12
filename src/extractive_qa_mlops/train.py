@@ -27,7 +27,7 @@ from transformers import (
     set_seed,
 )
 
-from extractive_qa_mlops.settings import MODELS_DIR, MLRUNS_DIR
+from extractive_qa_mlops.paths import MODELS_DIR, MLRUNS_DIR
 from extractive_qa_mlops.data import (
     load_squad,
     preprocess_train_features,

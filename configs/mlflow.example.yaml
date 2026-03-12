@@ -1,0 +1,14 @@
+# This file is currently kept as a reference for future MLflow expansion.
+# At the current stage of the baseline, active MLflow parameters are intentionally
+# stored in train.yaml because:
+# 1) the number of MLflow-related runtime parameters is still small;
+# 2) they are tightly coupled with the training experiment flow;
+# 3) keeping them in train.yaml reduces configuration fragmentation.
+#
+# This template is reserved for future scenarios such as:
+# - multi-environment MLflow setup
+# - remote tracking/registry configuration
+# - richer artifact/tagging policies
+# - reuse across multiple entrypoints
+#
+# Note: this file is not consumed by the current training pipeline.
