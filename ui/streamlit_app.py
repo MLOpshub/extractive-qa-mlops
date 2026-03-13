@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+
 import requests
 import streamlit as st
 
@@ -16,35 +17,25 @@ st.markdown(
     """
     <style>
         .main {
-            padding-top: 1.5rem;
+            padding-top: 0rem;
         }
         .block-container {
-            padding-top: 1rem;
+            padding-top: 2.5rem;
             padding-bottom: 2rem;
             max-width: 1200px;
         }
         .app-title {
             font-size: 2.2rem;
             font-weight: 700;
-            margin-bottom: 0.2rem;
+            line-height: 1.2;
+            margin-top: 0;
+            margin-bottom: 0.4rem;
         }
         .app-subtitle {
             color: #6b7280;
             font-size: 1rem;
+            margin-top: 0;
             margin-bottom: 1.5rem;
-        }
-        .section-card {
-            padding: 1rem 1rem 0.5rem 1rem;
-            border: 1px solid #e5e7eb;
-            border-radius: 14px;
-            background-color: #ffffff;
-            margin-bottom: 1rem;
-        }
-        .metric-box {
-            padding: 0.8rem 1rem;
-            border-radius: 12px;
-            border: 1px solid #e5e7eb;
-            background-color: #fafafa;
         }
     </style>
     """,
@@ -52,7 +43,8 @@ st.markdown(
 )
 
 st.markdown(
-    '<div class="app-title">Extractive Question Answering</div>', unsafe_allow_html=True
+    '<div class="app-title">Extractive Question Answering</div>',
+    unsafe_allow_html=True,
 )
 st.markdown(
     '<div class="app-subtitle">Professional demo UI for a FastAPI-based extractive QA service.</div>',
@@ -96,32 +88,31 @@ with left_col:
     )
 
     chunk_size = st.slider(
-        "Chunk Size", min_value=100, max_value=1000, value=300, step=50
+        "Chunk Size",
+        min_value=100,
+        max_value=1000,
+        value=300,
+        step=50,
     )
-    overlap = st.slider("Overlap", min_value=0, max_value=200, value=50, step=10)
+    overlap = st.slider(
+        "Overlap",
+        min_value=0,
+        max_value=200,
+        value=50,
+        step=10,
+    )
 
     action_col1, action_col2 = st.columns(2)
-
     qa_clicked = action_col1.button("Get Answer", use_container_width=True)
     chunk_clicked = action_col2.button("Generate Chunks", use_container_width=True)
 
-with right_col:
-    st.markdown("### Output")
-
-    answer_container = st.container(border=True)
-    meta_container = st.container(border=True)
-
-    with answer_container:
-        st.markdown("#### Answer")
-        st.write("Your answer will appear here.")
-
-    with meta_container:
-        st.markdown("#### Response Details")
-        st.write("Scores, positions, and chunk info will appear here.")
+mode = "default"
+result: dict | None = None
+error_message: str | None = None
 
 if qa_clicked:
     if not context.strip() or not question.strip():
-        st.warning("Please provide both context and question.")
+        error_message = "Please provide both context and question."
     else:
         try:
             response = requests.post(
@@ -134,36 +125,13 @@ if qa_clicked:
             )
             response.raise_for_status()
             result = response.json()
-
-            with right_col:
-                answer_container = st.container(border=True)
-                meta_container = st.container(border=True)
-
-                with answer_container:
-                    st.markdown("#### Answer")
-                    answer = result.get("answer", "").strip()
-                    if answer:
-                        st.success(answer)
-                    else:
-                        st.warning("No answer found.")
-
-                with meta_container:
-                    st.markdown("#### Response Details")
-                    metric_col1, metric_col2, metric_col3 = st.columns(3)
-                    metric_col1.metric("Score", f"{result.get('score', 0.0):.3f}")
-                    metric_col2.metric("Start", result.get("start", -1))
-                    metric_col3.metric("End", result.get("end", -1))
-
-                    st.markdown("##### Full JSON")
-                    st.json(result)
-
+            mode = "qa"
         except requests.RequestException as exc:
-            with right_col:
-                st.error(f"Request failed: {exc}")
+            error_message = f"Request failed: {exc}"
 
-if chunk_clicked:
+elif chunk_clicked:
     if not context.strip():
-        st.warning("Please provide context.")
+        error_message = "Please provide context."
     else:
         try:
             response = requests.post(
@@ -177,19 +145,46 @@ if chunk_clicked:
             )
             response.raise_for_status()
             result = response.json()
-
-            with right_col:
-                answer_container = st.container(border=True)
-                meta_container = st.container(border=True)
-
-                with answer_container:
-                    st.markdown("#### Chunk Summary")
-                    st.success(f"Generated {result.get('num_chunks', 0)} chunks.")
-
-                with meta_container:
-                    st.markdown("#### Chunk Details")
-                    st.json(result)
-
+            mode = "chunks"
         except requests.RequestException as exc:
-            with right_col:
-                st.error(f"Request failed: {exc}")
+            error_message = f"Request failed: {exc}"
+
+with right_col:
+    st.markdown("### Output")
+
+    with st.container(border=True):
+        if mode == "qa" and result is not None:
+            st.markdown("#### Answer")
+            answer = result.get("answer", "").strip()
+            if answer:
+                st.success(answer)
+            else:
+                st.warning("No answer found.")
+        elif mode == "chunks" and result is not None:
+            st.markdown("#### Chunk Summary")
+            st.success(f"Generated {result.get('num_chunks', 0)} chunks.")
+        else:
+            st.markdown("#### Answer")
+            st.write("Your answer will appear here.")
+
+    with st.container(border=True):
+        if mode == "qa" and result is not None:
+            st.markdown("#### Response Details")
+            metric_col1, metric_col2, metric_col3 = st.columns(3)
+            metric_col1.metric("Score", f"{result.get('score', 0.0):.3f}")
+            metric_col2.metric("Start", result.get("start", -1))
+            metric_col3.metric("End", result.get("end", -1))
+
+            st.markdown("##### Full JSON")
+            st.json(result)
+
+        elif mode == "chunks" and result is not None:
+            st.markdown("#### Chunk Details")
+            st.json(result)
+
+        else:
+            st.markdown("#### Response Details")
+            st.write("Scores, positions, and chunk info will appear here.")
+
+    if error_message:
+        st.error(error_message)
