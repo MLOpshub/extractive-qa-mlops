@@ -1,4 +1,4 @@
-# Extractive Question Answering (BERT) — End-to-End MLOps Pipeline
+# MLOps - Extractive Question Answering (BERT)
 
 This project builds an **extractive Question Answering** system using **BERT fine-tuned on SQuAD**, then serves it via **FastAPI** and ships it with **Docker**.
 
@@ -419,4 +419,6 @@ Future improvements can target both model capability and MLOps maturity.
 - Automate model registry and deployment workflows more fully through MLflow.
 - Improve span decoding and post-processing, such as n-best aggregation, tighter length constraints, and better normalization, to reduce boundary errors and narrow the EM–F1 gap.
 
+## 8 Demo link
+>🎥 You can check our project demo through this link: https://youtu.be/9nDR2G0vMOE?feature=shared
 ---
