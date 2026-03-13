@@ -315,6 +315,14 @@ We keep **two top-level folders**:
 
 **Best model management:** each run keeps its own artifacts and is logged to MLflow. After training, the run is compared with the current best model using **F1 first** and **EM second**. If it is better, `artifacts/models/best/` is updated so serving always uses the promoted best checkpoint.
 
+**MLflow experiment tracking:** The following screenshots show our MLflow tracking UI.
+
+![MLflow runs overview](./assets/mlflow_experiment_1.png)
+*MLflow runs overview across multiple BERT fine-tuning experiments.*
+
+![MLflow run details](./assets/mlflow_experiment_2.png)
+*Detailed MLflow run page showing logged metrics, parameters, and run metadata.*
+
 ### 3.5 Local inference
 
 After the promoted best model is downloaded from Google Drive into the expected local serving folder, FastAPI loads it at startup and serves inference requests locally.
@@ -322,6 +330,11 @@ After the promoted best model is downloaded from Google Drive into the expected 
 <img width="3060" height="810" alt="image" src="https://github.com/user-attachments/assets/527099a4-2680-4221-a575-b92d769fd275" />
 
 The local inference flow is straightforward: the service reads the promoted checkpoint, loads the tokenizer and QA model during startup, and keeps them ready for prediction. When `/qa` receives a request, the API validates the payload, applies context-length limits, tokenizes the question-context pair, runs inference, decodes the predicted answer span, and returns the answer text, score, span indices, and serving metadata. The `/chunks` endpoint can also be used to inspect how long contexts are split before inference-related processing.
+
+**Local demo UI:** For easier manual testing, we also provide a Streamlit-based frontend connected to the FastAPI backend. Users can paste a context paragraph, enter a question, adjust chunking settings, and inspect the returned output interactively.
+
+![Streamlit demo UI](./assets/streamlit.png)
+*Streamlit frontend connected to the FastAPI backend for local QA demo and chunk inspection.*
 
 ### 3.6 Containerization
 

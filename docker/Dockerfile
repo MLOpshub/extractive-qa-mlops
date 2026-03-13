@@ -2,17 +2,21 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONPATH=/app/src
+ENV MLRUNS_DIR=/app/artifacts/mlruns
+
 RUN apt-get update && apt-get install -y --no-install-recommends \
     git \
     && rm -rf /var/lib/apt/lists/*
 
-COPY . .
+RUN pip install --no-cache-dir --upgrade pip
 
-RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir fastapi "uvicorn[standard]" pydantic transformers torch
+COPY requirements.txt /app/requirements.txt
+RUN pip install --no-cache-dir -r /app/requirements.txt
 
-ENV PYTHONPATH=/app/src
-ENV MLRUNS_DIR=/app/artifacts/mlruns
+COPY . /app
 
 EXPOSE 8000
 
