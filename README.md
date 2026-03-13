@@ -333,7 +333,8 @@ The local inference flow is straightforward: the service reads the promoted chec
 
 **Local demo UI:** For easier manual testing, we also provide a Streamlit-based frontend connected to the FastAPI backend. Users can paste a context paragraph, enter a question, adjust chunking settings, and inspect the returned output interactively.
 
-![Streamlit demo UI](./assets/streamlit.png)
+![Streamlit demo UI](./assets/streamlit_1.png)
+![Streamlit demo UI](./assets/streamlit_2.png)
 *Streamlit frontend connected to the FastAPI backend for local QA demo and chunk inspection.*
 
 ### 3.6 Containerization
